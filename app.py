@@ -292,13 +292,9 @@ def launch_product(df, fig):
 # ==============================================================================
 # Gunicorn入口
 # ==============================================================================
-# 创建全局app实例供Gunicorn使用
 def create_app():
-    """应用工厂函数"""
-    # 配置Ngrok（仅在直接运行时使用）
-    # Gunicorn部署时不需要Ngrok
-
-    # 数据握手
+    """应用工厂函数 - 供Gunicorn使用"""
+    # 数据握手（使用相对路径）
     DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "iris.csv")
     manager = DataManager(DATA_PATH)
 
@@ -313,6 +309,7 @@ def create_app():
 
 # Gunicorn会使用这个server对象
 server = create_app()
+
 
 # ==============================================================================
 # 主执行流程（仅用于本地调试）
@@ -331,7 +328,7 @@ if __name__ == "__main__":
         print(f">>> [警告] Ngrok初始化失败（检查路径/令牌）: {e}")
         print("    继续使用本地部署...")
 
-    # 2. 数据握手
+    # 2. 数据握手（使用相对路径）
     DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "iris.csv")
     manager = DataManager(DATA_PATH)
 
@@ -343,38 +340,4 @@ if __name__ == "__main__":
     # 4. 启动应用
     app = launch_product(manager.df, figure)
     print(">>> [产品就绪] 在端口8050提供服务...")
-    app.run(debug=False, port=8050)
-# ==============================================================================
-# 主执行流程
-# ==============================================================================
-if __name__ == "__main__":
-    print(">>> 初始化可视化产品架构...")
-
-    # 1. 配置Ngrok（远程共享协议）
-    # 修正：使用正确的绝对路径
-    conf.get_default().ngrok_path = r"E:\ngrok\ngrok.exe"
-
-    try:
-        ngrok.kill()  # 清理旧进程
-        public_url = ngrok.connect(8050).public_url
-        print(f">>> [远程协议] 隧道已建立: {public_url}")
-    except Exception as e:
-        print(f">>> [警告] Ngrok初始化失败（检查路径/令牌）: {e}")
-        print("    继续使用本地部署...")
-
-    # 2. 数据握手
-    # 使用用户提供的绝对路径
-    DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "iris.csv")
-    manager = DataManager(DATA_PATH)
-
-    # 3. 构建图表
-    architect = ChartArchitect(manager.df)
-    figure = architect.build_scatter_matrix()
-    architect.export_assets(figure)
-
-    # 4. 启动应用
-    app = launch_product(manager.df, figure)
-    print(">>> [产品就绪] 在端口8050提供服务...")
-
-    # 修正：使用新版API
     app.run(debug=False, port=8050)
